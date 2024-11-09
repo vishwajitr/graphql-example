@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .stock-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .positive { color: green; }
+        .negative { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Stock Market Dashboard</h1>
+    <div id="stockList"></div>
+
+    <script>
+        async function fetchStocks() {
+            const query = `
+                query {
+                    stocks {
+                        symbol
+                        name
+                        price
+                        change
+                        volume
+                    }
+                }
+            `;
+
+            try {
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+                displayStocks(data.data.stocks);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayStocks(stocks) {
+            const stockList = document.getElementById('stockList');
+            stockList.innerHTML = stocks.map(stock => `
+                <div class="stock-card">
+                    <h2>${stock.symbol} - ${stock.name}</h2>
+                    <p>Price: $${stock.price?.toFixed(2) || 'N/A'}</p>
+                    <p class="${stock.change > 0 ? 'positive' : 'negative'}">
+                        Change: ${stock.change?.toFixed(2) || 'N/A'}
+                    </p>
+                    <p>Volume: ${stock.volume?.toLocaleString() || 'N/A'}</p>
+                </div>
+            `).join('');
+        }
+
+        // Update stocks every 30 seconds
+        fetchStocks();
+        setInterval(fetchStocks, 30000);
+    </script>
+</body>
+</html>
